@@ -1,4 +1,3 @@
-
 // screens/patient/LogEntryScreen.js
 import { spacing, fontSizes } from '../../../utils/spacing';
 import React, { useState, useEffect } from 'react';
@@ -20,6 +19,19 @@ import LoadingSpinner from '../../../components/LoadingSpinner';
 import * as ImagePicker from 'expo-image-picker';
 
 const LogEntryScreen = ({ route, navigation }) => {
+  // Add parameter validation
+  if (!route?.params?.watchId) {
+    // If no watchId is provided, show error and go back
+    useEffect(() => {
+      Alert.alert(
+        'Error',
+        'No watch selected',
+        [{ text: 'OK', onPress: () => navigation.goBack() }]
+      );
+    }, []);
+    return <LoadingSpinner />;
+  }
+
   const { watchId } = route.params;
   const { userData } = useAuth();
   const [loading, setLoading] = useState(true);

@@ -1,4 +1,3 @@
-
 // screens/patient/HistoryScreen.js
 import { spacing, fontSizes } from '../../../utils/spacing';
 import { Dimensions } from 'react-native';
@@ -133,6 +132,7 @@ const HistoryScreen = ({ navigation }) => {
           onPress={(selected) => setTimeRange(selected)}
           containerStyle={styles.buttonGroupContainer}
           selectedButtonStyle={styles.selectedButton}
+          Component={TouchableOpacity}
         />
         
         <ButtonGroup
@@ -145,6 +145,7 @@ const HistoryScreen = ({ navigation }) => {
           containerStyle={styles.viewToggleContainer}
           selectedButtonStyle={styles.selectedButton}
           buttonContainerStyle={styles.iconButtonContainer}
+          Component={TouchableOpacity}
         />
         
         <ScrollView 
