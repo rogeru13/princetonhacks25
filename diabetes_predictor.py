@@ -1,222 +1,215 @@
-import requests
-import json
-from typing import Dict, List, Optional
-from datetime import datetime, timedelta
-import os
-from dotenv import load_dotenv
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler, LabelEncoder
+from sklearn.ensemble import RandomForestClassifier  # Better than SVM for this case
+import joblib
+from typing import Dict, List
 
-# Add these at the top of the file
-load_dotenv()
-
-class DiabetesRiskPredictor:
+class DiabetesPredictor:
     def __init__(self):
-        self.API_URL = "https://api-inference.huggingface.co/models/shabari-vignesh8/Diabetes-prediction"
-        self.headers = {"Authorization": f"Bearer {os.getenv('HUGGING_FACE_API_KEY')}"}
+        """Initialize the diabetes predictor"""
+        try:
+            # Try to load existing model
+            print("Loading existing model...")
+            self.model = joblib.load('diabetes_model.joblib')
+            self.scaler = joblib.load('scaler.joblib')
+            self.label_encoders = joblib.load('label_encoders.joblib')
+            print("Model loaded successfully!")
+        except:
+            print("Training new model...")
+            self.train_new_model()
+    
+    def train_new_model(self):
+        """Train a new model on the dataset"""
+        # Load and preprocess data
+        df = pd.read_csv("diabetes_prediction_dataset.csv")
+        print(f"Training on {len(df)} patients")
         
-    def predict_future_risk(self, 
-                          current_data: Dict[str, float],
-                          historical_data: Optional[List[Dict]] = None,
-                          prediction_window_months: int = 12) -> Dict:
-        """
-        Predicts future diabetes risk based on current stats and historical trends
+        # Prepare features
+        self.label_encoders = {}
+        X = self._preprocess_features(df)
+        y = df['diabetes']
         
-        Args:
-            current_data: Current health measurements
-            historical_data: List of previous measurements with timestamps
-            prediction_window_months: How far into the future to predict
-        """
-        # Get current diabetes status
-        current_risk = self._get_current_risk(current_data)
-        
-        # Analyze trends if historical data is available
-        trend_risk = self._analyze_trends(historical_data) if historical_data else None
-        
-        # Identify pre-diabetic indicators
-        pre_diabetic_risk = self._analyze_pre_diabetic_indicators(current_data)
-        
-        # Combine all risk factors
-        overall_risk = self._calculate_overall_risk(
-            current_risk=current_risk,
-            trend_risk=trend_risk,
-            pre_diabetic_risk=pre_diabetic_risk
+        # Split data
+        X_train, X_test, y_train, y_test = train_test_split(
+            X, y, test_size=0.2, random_state=42
         )
         
-        return {
-            "risk_level": overall_risk["level"],
-            "time_to_risk": self._estimate_time_to_diabetes(overall_risk["score"]),
-            "contributing_factors": overall_risk["factors"],
-            "preventative_actions": self._get_preventative_actions(overall_risk),
-            "estimated_cost_savings": self._calculate_cost_savings(overall_risk)
-        }
-
-    def _get_current_risk(self, data: Dict) -> Dict:
-        """Get current diabetes risk from model"""
-        formatted_data = [[
-            data["Pregnancies"],
-            data["Glucose"],
-            data["BloodPressure"],
-            data["SkinThickness"],
-            data["Insulin"],
-            data["BMI"],
-            data["DiabetesPedigreeFunction"],
-            data["Age"]
-        ]]
+        # Scale features
+        self.scaler = StandardScaler()
+        X_train_scaled = self.scaler.fit_transform(X_train)
+        X_test_scaled = self.scaler.transform(X_test)
         
+        # Train model
+        self.model = RandomForestClassifier(
+            n_estimators=100,
+            max_depth=10,
+            random_state=42
+        )
+        self.model.fit(X_train_scaled, y_train)
+        
+        # Evaluate
+        train_score = self.model.score(X_train_scaled, y_train)
+        test_score = self.model.score(X_test_scaled, y_test)
+        print(f"Training accuracy: {train_score:.2%}")
+        print(f"Testing accuracy: {test_score:.2%}")
+        
+        # Save model
+        joblib.dump(self.model, 'diabetes_model.joblib')
+        joblib.dump(self.scaler, 'scaler.joblib')
+        joblib.dump(self.label_encoders, 'label_encoders.joblib')
+    
+    def _preprocess_features(self, df: pd.DataFrame) -> np.ndarray:
+        """Preprocess features for prediction"""
+        # Encode categorical variables
+        categorical_columns = ['gender', 'smoking_history']
+        for column in categorical_columns:
+            self.label_encoders[column] = LabelEncoder()
+            df[column] = self.label_encoders[column].fit_transform(df[column])
+        
+        # Select features
+        feature_columns = [
+            'gender', 'age', 'hypertension', 'heart_disease',
+            'smoking_history', 'bmi', 'HbA1c_level', 'blood_glucose_level'
+        ]
+        
+        return df[feature_columns]
+    
+    def predict_risk(self, patient_data: Dict) -> Dict:
+        """Predict diabetes risk for a patient"""
         try:
-            print(f"Sending request to model with headers: {self.headers}")
-            print(f"Input data: {formatted_data}")
+            # Prepare input data
+            input_df = pd.DataFrame([patient_data])
             
-            response = requests.post(
-                self.API_URL, 
-                headers=self.headers, 
-                json={"inputs": formatted_data}
-            )
+            # Encode categorical variables
+            for column, encoder in self.label_encoders.items():
+                input_df[column] = encoder.transform(input_df[column])
             
-            print(f"Response status code: {response.status_code}")
-            print(f"Response content: {response.text}")
+            # Scale features
+            input_scaled = self.scaler.transform(input_df)
             
-            if response.status_code != 200:
-                raise Exception(f"API request failed with status {response.status_code}: {response.text}")
-                
-            return {"current_prediction": response.json()}
+            # Get prediction and probability
+            prediction = self.model.predict(input_scaled)[0]
+            probability = self.model.predict_proba(input_scaled)[0][1]
             
+            # Analyze risk factors
+            risk_factors = self._analyze_risk_factors(patient_data)
+            
+            return {
+                "has_diabetes": bool(prediction),
+                "probability": float(probability),
+                "risk_level": self._get_risk_level(probability),
+                "risk_factors": risk_factors,
+                "recommendations": self._get_recommendations(patient_data, probability)
+            }
+        
         except Exception as e:
-            print(f"Error making prediction: {str(e)}")
-            return {"current_prediction": None, "error": str(e)}
-
-    def _analyze_trends(self, historical_data: List[Dict]) -> Dict:
-        """Analyze trends in vital measurements over time"""
-        if not historical_data:
-            return None
-            
-        trends = {
-            "glucose_trend": self._calculate_trend([d["Glucose"] for d in historical_data]),
-            "bmi_trend": self._calculate_trend([d["BMI"] for d in historical_data]),
-            "blood_pressure_trend": self._calculate_trend([d["BloodPressure"] for d in historical_data])
-        }
-        
-        return trends
-
-    def _analyze_pre_diabetic_indicators(self, data: Dict) -> Dict:
-        """Analyze pre-diabetic risk factors"""
-        risk_factors = []
-        
-        # Check glucose levels (pre-diabetic range)
-        if 100 <= data["Glucose"] < 126:
-            risk_factors.append(("glucose", "elevated", "high"))
-            
-        # Check BMI (overweight or obese)
-        if data["BMI"] >= 25:
-            risk_factors.append(("bmi", "elevated", "medium"))
-            
-        # Family history
-        if data["DiabetesPedigreeFunction"] > 0.5:
-            risk_factors.append(("genetic", "significant", "high"))
-            
-        return {"risk_factors": risk_factors}
-
-    def _calculate_overall_risk(self, current_risk: Dict, 
-                              trend_risk: Optional[Dict], 
-                              pre_diabetic_risk: Dict) -> Dict:
-        """Combine all risk factors into overall future risk assessment"""
-        risk_score = 0
+            print(f"Error in prediction: {str(e)}")
+            return {"error": str(e)}
+    
+    def _analyze_risk_factors(self, data: Dict) -> List[str]:
+        """Analyze patient's risk factors"""
         factors = []
         
-        # Current diabetes prediction contributes 40% of total risk
-        if current_risk["current_prediction"] == 1:
-            risk_score += 0.4
-            factors.append("Current measurements indicate high risk")
+        if data['blood_glucose_level'] > 140:
+            factors.append("High blood glucose level")
+        if data['HbA1c_level'] > 6.5:
+            factors.append("Elevated HbA1c")
+        if data['bmi'] >= 30:
+            factors.append("Obesity")
+        if data['hypertension']:
+            factors.append("Hypertension")
+        if data['heart_disease']:
+            factors.append("Heart disease")
+        if data['age'] > 45:
+            factors.append("Age over 45")
+        if data['smoking_history'] == 'current':
+            factors.append("Current smoker")
             
-        # Trends contribute up to 50% of total risk
-        if trend_risk:
-            # Rising glucose adds 30%
-            if trend_risk["glucose_trend"] > 0:
-                risk_score += 0.3
-                factors.append("Rising glucose levels")
-            # Rising BMI adds 20%
-            if trend_risk["bmi_trend"] > 0:
-                risk_score += 0.2
-                factors.append("Rising BMI")
-                
-        # Pre-diabetic indicators can add up to 10% each
-        for factor, status, severity in pre_diabetic_risk["risk_factors"]:
-            if severity == "high":
-                risk_score += 0.1
-            factors.append(f"Pre-diabetic {factor}")
-            
-        return {
-            "score": risk_score,
-            "level": self._score_to_risk_level(risk_score),
-            "factors": factors
-        }
-
-    def _score_to_risk_level(self, score: float) -> str:
-        if score >= 0.7:       # 70%+ = HIGH risk
+        return factors
+    
+    def _get_risk_level(self, probability: float) -> str:
+        """Convert probability to risk level"""
+        if probability >= 0.7:
             return "HIGH"
-        elif score >= 0.4:     # 40-69% = MODERATE risk
-            return "LOW"
-        return "LOW"          # Below 40% = LOW risk
-
-    def _estimate_time_to_diabetes(self, risk_score: float) -> int:
-        """Estimate months until potential diabetes development based on risk score"""
-        if risk_score >= 0.7:
-            return 12  # High risk: within a year
-        elif risk_score >= 0.4:
-            return 24  # Moderate risk: within 2 years
-        return 60  # Low risk: 5+ years
-
-    def _calculate_trend(self, values: List[float]) -> float:
-        """Calculate trend direction and magnitude"""
-        if len(values) < 2:
-            return 0
-        return (values[-1] - values[0]) / len(values)
-
-    def _get_preventative_actions(self, risk_assessment: Dict) -> List[str]:
-        """Get preventative actions based on risk level"""
-        if risk_assessment["level"] == "HIGH":
-            return ["Consult a healthcare provider", "Schedule regular check-ups"]
-        elif risk_assessment["level"] == "MODERATE":
-            return ["Monitor blood sugar levels closely", "Aim for 150 minutes of moderate exercise weekly"]
-        return ["No immediate preventative actions needed"]
-
-    def _calculate_cost_savings(self, risk_assessment: Dict) -> float:
-        """Calculate potential cost savings from preventative measures"""
-        annual_diabetes_cost = 9600  # Average annual cost of diabetes treatment
-        preventative_program_cost = 1200  # Annual cost of prevention program
+        elif probability >= 0.3:
+            return "MODERATE"
+        return "LOW"
+    
+    def _get_recommendations(self, data: Dict, probability: float) -> List[str]:
+        """Get personalized recommendations"""
+        recommendations = []
         
-        if risk_assessment["level"] == "HIGH":
-            return annual_diabetes_cost - preventative_program_cost
-        elif risk_assessment["level"] == "MODERATE":
-            return (annual_diabetes_cost - preventative_program_cost) / 2
-        return 0
+        if probability >= 0.7:
+            recommendations.extend([
+                "Consult a healthcare provider immediately",
+                "Monitor blood glucose regularly",
+                "Start a diabetes prevention program"
+            ])
+        elif probability >= 0.3:
+            recommendations.extend([
+                "Schedule a check-up with your doctor",
+                "Consider lifestyle modifications",
+                "Monitor blood glucose periodically"
+            ])
+        
+        if data['bmi'] >= 25:
+            recommendations.append("Consider a weight management program")
+        if data['smoking_history'] == 'current':
+            recommendations.append("Consider smoking cessation program")
+            
+        return recommendations
 
-# Test usage
+# Test the predictor
 if __name__ == "__main__":
-    predictor = DiabetesRiskPredictor()
+    predictor = DiabetesPredictor()
     
-    # Current data point
-    current_data = {
-        "Pregnancies": 6,
-        "Glucose": 110,  # Pre-diabetic range
-        "BloodPressure": 72,
-        "SkinThickness": 35,
-        "Insulin": 0,
-        "BMI": 27.5,  # Overweight range
-        "DiabetesPedigreeFunction": 0.627,
-        "Age": 50
-    }
-    
-    # Example historical data (3 months)
-    historical_data = [
-        {**current_data, "Glucose": 105, "timestamp": "2024-01-01"},
-        {**current_data, "Glucose": 108, "timestamp": "2024-02-01"},
-        {**current_data, "Glucose": 110, "timestamp": "2024-03-01"}
+    # Multiple test cases
+    test_patients = [
+        {
+            "gender": "Female",
+            "age": 54.0,
+            "hypertension": 0,
+            "heart_disease": 0,
+            "smoking_history": "never",
+            "bmi": 27.32,
+            "HbA1c_level": 6.6,
+            "blood_glucose_level": 140
+        },
+        {
+            "gender": "Male",
+            "age": 42.0,
+            "hypertension": 1,
+            "heart_disease": 1,
+            "smoking_history": "current",
+            "bmi": 31.0,
+            "HbA1c_level": 7.2,
+            "blood_glucose_level": 180
+        },
+        {
+            "gender": "Female",
+            "age": 28.0,
+            "hypertension": 0,
+            "heart_disease": 0,
+            "smoking_history": "never",
+            "bmi": 23.5,
+            "HbA1c_level": 5.2,
+            "blood_glucose_level": 90
+        }
     ]
     
-    result = predictor.predict_future_risk(current_data, historical_data)
-    print("\nRisk Assessment Results:")
-    print(f"Risk Level: {result['risk_level']}")
-    print(f"Estimated Time to Risk: {result['time_to_risk']} months")
-    print(f"Contributing Factors: {result['contributing_factors']}")
-    print(f"Recommended Actions: {result['preventative_actions']}")
-    print(f"Potential Cost Savings: ${result['estimated_cost_savings']}") 
+    # Test each patient
+    for i, patient in enumerate(test_patients, 1):
+        print(f"\nPatient {i} Assessment:")
+        print("-" * 50)
+        print(f"Patient Details: {patient}")
+        
+        result = predictor.predict_risk(patient)
+        
+        print("\nRisk Assessment Results:")
+        print(f"Diabetes Risk: {'Positive' if result['has_diabetes'] else 'Negative'}")
+        print(f"Probability: {result['probability']:.1%}")
+        print(f"Risk Level: {result['risk_level']}")
+        print(f"Risk Factors: {result['risk_factors']}")
+        print(f"Recommendations: {result['recommendations']}") 
