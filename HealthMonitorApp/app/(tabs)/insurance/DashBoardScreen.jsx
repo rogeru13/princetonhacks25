@@ -12,13 +12,15 @@ import { Dimensions } from 'react-native';
 const { width } = Dimensions.get('window');
 
 const DashboardScreen = ({ navigation }) => {
-  const { userData } = useAuth();
+  const { userData, loading: authLoading } = useAuth();
   const [summary, setSummary] = useState(null);
   const [highRiskPatients, setHighRiskPatients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
   const loadDashboardData = async () => {
+    if (!userData?.id) return;
+
     try {
       setLoading(true);
       const summaryData = await fetchInsuranceSummary(userData.id);
@@ -35,17 +37,29 @@ const DashboardScreen = ({ navigation }) => {
   };
 
   useEffect(() => {
-    loadDashboardData();
-  }, []);
+    if (userData?.id) {
+      loadDashboardData();
+    }
+  }, [userData]);
 
   const onRefresh = () => {
     setRefreshing(true);
     loadDashboardData();
   };
 
-  if (loading && !refreshing) {
+  // Show loading spinner while initial data loads
+  if (authLoading || (loading && !refreshing)) {
     return <LoadingSpinner />;
   }
+
+  // Early return if no user data
+  if (!userData) {
+    return null;
+  }
+
+  // Safe access to user data
+  const firstName = userData?.firstName ?? 'User';
+  const companyName = userData?.companyName ?? 'Insurance Company';
 
   const riskDistributionData = {
     labels: ['Low', 'Medium', 'High'],
@@ -77,8 +91,8 @@ const DashboardScreen = ({ navigation }) => {
       }
     >
       <View style={styles.header}>
-        <Text style={styles.greeting}>Welcome, {userData.firstName}</Text>
-        <Text style={styles.companyName}>{userData.companyName} Insurance</Text>
+        <Text style={styles.greeting}>Welcome, {firstName}</Text>
+        <Text style={styles.companyName}>{companyName}</Text>
       </View>
 
       <View style={styles.statsContainer}>

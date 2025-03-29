@@ -56,7 +56,7 @@ const DashboardScreen = ({ navigation }) => {
 
   const overdueWatches = getOverdueWatches();
 
-  if (loading) {
+  if (!userData) {
     return <LoadingSpinner />;
   }
 
@@ -68,8 +68,12 @@ const DashboardScreen = ({ navigation }) => {
       }
     >
       <View style={styles.header}>
-        <Text style={styles.greeting}>Hello, {userData.firstName}!</Text>
-        <Text style={styles.date}>{format(new Date(), 'EEEE, MMMM d')}</Text>
+        <Text style={styles.greeting}>
+          Hello, {userData?.firstName || 'User'}!
+        </Text>
+        <Text style={styles.date}>
+          {format(new Date(), 'EEEE, MMMM d')}
+        </Text>
       </View>
 
       {overdueWatches.length > 0 && (

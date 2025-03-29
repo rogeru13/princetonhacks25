@@ -8,13 +8,15 @@ import { useAuth } from '../../../context/AuthContext';
 import LoadingSpinner from '../../../components/LoadingSpinner';
 
 const DashboardScreen = ({ navigation }) => {
-  const { userData } = useAuth();
+  const { userData, loading: authLoading } = useAuth();
+  const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [summary, setSummary] = useState(null);
   const [alerts, setAlerts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
 
   const loadDashboardData = async () => {
+    if (!userData?.id) return;
+    
     try {
       setLoading(true);
       const summaryData = await fetchProviderSummary(userData.id);
@@ -31,13 +33,19 @@ const DashboardScreen = ({ navigation }) => {
   };
 
   useEffect(() => {
-    loadDashboardData();
-  }, []);
+    if (userData?.id) {
+      loadDashboardData();
+    }
+  }, [userData]);
 
   const onRefresh = () => {
     setRefreshing(true);
     loadDashboardData();
   };
+
+  if (authLoading || !userData) {
+    return <LoadingSpinner />;
+  }
 
   if (loading && !refreshing) {
     return <LoadingSpinner />;
@@ -51,8 +59,17 @@ const DashboardScreen = ({ navigation }) => {
       }
     >
       <View style={styles.header}>
-        <Text style={styles.greeting}>Hello, Dr. {userData.lastName}</Text>
-        <Text style={styles.date}>{new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</Text>
+        <Text style={styles.greeting}>
+          Hello, Dr. {userData?.lastName || 'Provider'}
+        </Text>
+        <Text style={styles.date}>
+          {new Date().toLocaleDateString('en-US', { 
+            weekday: 'long', 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+          })}
+        </Text>
       </View>
 
       <View style={styles.statsContainer}>
@@ -172,7 +189,9 @@ const styles = StyleSheet.create({
   },
   header: {
     padding: 20,
-    paddingBottom: 10,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
   },
   greeting: {
     fontSize: 24,
