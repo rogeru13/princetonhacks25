@@ -5,6 +5,7 @@ from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.ensemble import RandomForestClassifier  # Better than SVM for this case
 import joblib
 from typing import Dict, List
+from healthcare_incentives import HealthcareIncentiveCalculator
 
 class DiabetesPredictor:
     def __init__(self):
@@ -164,6 +165,7 @@ class DiabetesPredictor:
 # Test the predictor
 if __name__ == "__main__":
     predictor = DiabetesPredictor()
+    incentive_calc = HealthcareIncentiveCalculator()
     
     # Multiple test cases
     test_patients = [
@@ -205,11 +207,28 @@ if __name__ == "__main__":
         print("-" * 50)
         print(f"Patient Details: {patient}")
         
-        result = predictor.predict_risk(patient)
+        # Get risk assessment
+        risk_result = predictor.predict_risk(patient)
+        
+        # Calculate incentives
+        incentive_result = incentive_calc.calculate_incentives(risk_result)
         
         print("\nRisk Assessment Results:")
-        print(f"Diabetes Risk: {'Positive' if result['has_diabetes'] else 'Negative'}")
-        print(f"Probability: {result['probability']:.1%}")
-        print(f"Risk Level: {result['risk_level']}")
-        print(f"Risk Factors: {result['risk_factors']}")
-        print(f"Recommendations: {result['recommendations']}") 
+        print(f"Diabetes Risk: {'Positive' if risk_result['has_diabetes'] else 'Negative'}")
+        print(f"Probability: {risk_result['probability']:.1%}")
+        print(f"Risk Level: {risk_result['risk_level']}")
+        print(f"Risk Factors: {risk_result['risk_factors']}")
+        
+        print("\nFinancial Analysis:")
+        print(f"Expected Annual Cost (No Intervention): ${incentive_result['expected_annual_cost_no_intervention']:,.2f}")
+        print("\nRecommended Programs:")
+        for prog in incentive_result['program_recommendations']:
+            if prog['recommended']:
+                print(f"- {prog['description']}:")
+                print(f"  Annual Cost: ${prog['annual_incentive_cost']:,.2f}")
+                print(f"  Potential Savings: ${prog['potential_savings']:,.2f}")
+                print(f"  ROI: {prog['roi']:.1%}")
+                print(f"  Risk Reduction: {prog['risk_reduction']:.0f}%")
+        
+        print("\nSummary:")
+        print(incentive_result['summary']) 
