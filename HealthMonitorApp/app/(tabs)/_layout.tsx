@@ -1,15 +1,12 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
 import { Platform } from 'react-native';
-import { createStackNavigator } from '@react-navigation/stack';
 
 import { HapticTab } from '@/components/HapticTab';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import TabBarBackground from '@/components/ui/TabBarBackground';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
-
-const Stack = createStackNavigator();
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
@@ -43,13 +40,11 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
         }}
       />
-      <Stack.Screen 
-        name="patient/LogEntryScreen"
-        options={{ 
-          title: 'Log Entry',
-          // Add any other options you need
+      <Tabs.Screen
+        name="patient"
+        options={{
+          href: null, // This hides the tab but keeps the stack available
         }}
-        initialParams={{ watchId: null }} // Add default params
       />
     </Tabs>
   );
