@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Insurance Dashboard – Preventative Care</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>Insurance Dashboard – Preventative Care</h1>
+  </header>
+  <main>
+    <div class="top-half">
+      <section id="patients-section">
+        <h2>Patient List</h2>
+        <input type="text" id="search-input" placeholder="Search patient by name...">
+        <button id="search-btn">Search</button>
+        <div class="table-container">
+          <table id="patients-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Diabetes Risk</th>
+                <th>Hypertension Risk</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Simplified patient rows will be inserted here -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+      <section id="predict-section">
+        <h2>Update Risk & Predict Annual Incentive & Savings</h2>
+        <form id="predict-form">
+          <label for="diabetesRisk">Diabetes Risk (0 to 1):</label>
+          <input type="number" step="0.01" id="diabetesRisk" name="diabetesRisk" required>
+          <label for="hypertensionRisk">Hypertension Risk (0 to 1):</label>
+          <input type="number" step="0.01" id="hypertensionRisk" name="hypertensionRisk" required>
+          <button type="submit">Predict</button>
+        </form>
+        <div id="prediction-result"></div>
+      </section>
+    </div>
+    <div class="bottom-half">
+      <h2>Full Patient Data</h2>
+      <div class="full-data">
+        <table id="full-patients-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Diabetes Risk</th>
+              <th>Hypertension Risk</th>
+              <th>Incentive Payout</th>
+              <th>Payout Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Full patient rows will be inserted here -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+  <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,129 @@
+/* Retro Red & Cream Theme */
+
+/* Define primary colors */
+:root {
+    --cream: #f5f5dc;
+    --retro-red: #8b0000;
+    --dark-red: #a40000;
+    --text-color: #330000;
+    --accent: #d14b4b;
+  }
+  
+  body {
+    font-family: 'Courier New', Courier, monospace;
+    background-color: var(--cream);
+    color: var(--text-color);
+    margin: 0;
+    padding: 20px;
+  }
+  
+  header {
+    background-color: var(--retro-red);
+    color: var(--cream);
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+  
+  header h1 {
+    margin: 0;
+    font-size: 2em;
+  }
+  
+  main {
+    margin-top: 20px;
+  }
+  
+  /* Top half container: occupies 50vh */
+  .top-half {
+    display: flex;
+    gap: 20px;
+    height: 50vh;
+  }
+  
+  /* Each section in the top half */
+  .top-half section {
+    flex: 1;
+    background-color: var(--cream);
+    border: 2px solid var(--retro-red);
+    padding: 15px;
+    border-radius: 8px;
+    overflow-y: auto;
+  }
+  
+  /* Table container for simplified patient list */
+  .table-container {
+    max-height: 200px;
+    overflow-y: auto;
+    margin-top: 10px;
+  }
+  
+  /* Table styling */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: #fffaf0;
+  }
+  
+  table, th, td {
+    border: 1px solid var(--retro-red);
+  }
+  
+  th, td {
+    padding: 10px;
+    text-align: center;
+  }
+  
+  /* Bottom half container: scrollable full patient data */
+  .bottom-half {
+    margin-top: 20px;
+    height: 50vh;
+    overflow-y: auto;
+    background-color: var(--cream);
+    border: 2px solid var(--retro-red);
+    border-radius: 8px;
+    padding: 15px;
+  }
+  
+  /* Prediction form styling */
+  #predict-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: 300px;
+  }
+  
+  input, button {
+    padding: 8px;
+    font-size: 1em;
+    border: 1px solid var(--retro-red);
+    border-radius: 4px;
+  }
+  
+  input:focus, button:focus {
+    outline: none;
+    border-color: var(--dark-red);
+  }
+  
+  button {
+    background-color: var(--retro-red);
+    color: var(--cream);
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  button:hover {
+    background-color: var(--dark-red);
+  }
+  
+  #search-input {
+    width: calc(100% - 20px);
+    margin-bottom: 10px;
+  }
+  
+  #prediction-result {
+    margin-top: 10px;
+    font-weight: bold;
+    color: var(--retro-red);
+  }
+  
