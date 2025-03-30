@@ -1,0 +1,2 @@
+Gender,Age,Hypertension,Heart_Disease,Smoking_History,BMI,HbA1c_Level,Blood_Glucose_Level,Country,Cholesterol,Physical_Activity,Alcohol_Intake,Salt_Intake,Sleep_Duration,Heart_Rate,LDL,HDL,Triglycerides,Glucose,Education_Level,Employment_Status,Diabetes,Systolic_BP,Diastolic_BP,Physical_Activity_Level,Family_History,Stress_Level
+Male,76,1,1,N/A,23.1,N/A,N/A,Germany,162.6,N/A,Moderate,N/A,8.9,69,141.5,65.5,147.3,N/A,High School,Employed,1,N/A,N/A,N/A,N/A,N/A

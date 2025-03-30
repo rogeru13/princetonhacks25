@@ -14,36 +14,6 @@ import tensorflow as tf
 from tensorflow import keras
 from google import genai
 
-client = genai.Client(api_key="AIzaSyDfCeA7w1nNH4Yiify0tvpgaYixq4eSbx4")
-
-test_data = pd.DataFrame({
-    'BMI': [22.5, 28.0, 33.5, 25.0, 29.0],
-    'blood_glucose_level': [95, 140, 180, 110, 130],
-    'HbA1c_Level': [5.2, 6.8, 8.0, 5.5, 6.2],
-    'Hypertension': [0, 1, 1, 0, 0],
-    'Heart_Disease': [0, 0, 1, 0, 0],
-    'age_group': ['41-60', '21-40', 'upper_61', '21-40', '41-60']
-})
-
-def get_gemini_recommendation(risk_level, patient_data):
-    global client
-    prompt = f"""
-    A patient has been classified as {risk_level} risk for diabetes. Based on their medical data:
-    {patient_data}
-
-    Please provide specific and actionable lifestyle, diet, and medical recommendations to help them lower their risk.
-    Provide suggestions for exercise, diet plans, and any relevant medical checkups.
-    """
-    
-    try:
-        response = client.models.generate_content(
-            model="gemini-2.0-flash", 
-            contents=prompt
-        )
-        return response.text
-    except Exception as e:
-        return f"Error in getting recommendation: {str(e)}"
-
 def fisher_score_manual(X, y, feature_names):
     scores = []
     n_classes = np.unique(y)
@@ -211,56 +181,27 @@ def predict_db(test_path):
     test_probabilities = RandomForest.predict_proba(test_data_scaled)
 
     test_percentages = test_probabilities * 100
-    results = []
-
-    for i, probs in enumerate(test_percentages):
-        risk_category = "Low Risk" if probs[1] < 40 else "Moderate Risk" if probs[1] < 70 else "High Risk"
-        patient_data = norm_test_path.iloc[i].to_dict()
-
-        # Generate recommendation using Gemini
-        gemini_recommendation = get_gemini_recommendation(risk_category, patient_data)
-        
-        result_str = (
-            f"Test Data Point {i + 1}:\n"
-            f"Probability of Class 0 (No Diabetes): {probs[0]:.2f}%\n"
-            f"Probability of Class 1 (Diabetes): {probs[1]:.2f}%\n"
-            f"Risk Category: {risk_category}\n"
-            "Personalized Recommendations:\n"
-            f"{gemini_recommendation}\n"
-            + "="*50
-        )
-        results.append(result_str)
-
-    return "\n".join(results)
-
-# print(data.shape)
-# print(data['gender'].value_counts())
-# print('Shape before removing Other values: ', data.shape)
-# print('Shape after removing Other values: ', data.shape)
-# print(result)
+    test_percentages = test_percentages[0]
+    risk_category = "Low Risk" if test_percentages[1] < 40 else "Moderate Risk" if test_percentages[1] < 70 else "High Risk"
+    patient_data = test_path.iloc[0].to_dict()
+    return risk_category, test_percentages[1], patient_data
 
 
 
-# print(data.shape)
-# print(target.shape)
-# print('Cv Scores')
-# print(cv_scores5)
-# print('Cv Scores Accuracy Mean: ', cv_scores5.mean())
+    # print(test_percentages)
 
+    # for i, probs in enumerate(test_percentages):
+    #     risk_category = "Low Risk" if probs[1] < 40 else "Moderate Risk" if probs[1] < 70 else "High Risk"
+    #     patient_data = norm_test_path.iloc[i].to_dict()
 
-# print(metrics_calculator_rf_test)
+    #     # Generate recommendation using Gemini        
+    #     result_str = (
+    #         f"Test Data Point {i + 1}:\n"
+    #         f"Probability of Class 0 (No Diabetes): {probs[0]:.2f}%\n"
+    #         f"Probability of Class 1 (Diabetes): {probs[1]:.2f}%\n"
+    #         f"Risk Category: {risk_category}\n"
+    #         + "="*50
+    #     )
+    #     results.append(result_str)
 
-# Create test data
-
-# Encode categorical variables
-# print(feature_importance_df)
-
-# Make predictions
-# test_predictions = RandomForest.predict(test_data_scaled)
-
-# Print the percentages for each class
-
-
-    # print(f"Test Data Point {i + 1}:")
-    # print(f"Probability of Class 0 (Non-Diabetic): {probs[0]:.2f}%")
-    # print(f"Probability of Class 1 (Diabetic): {probs[1]:.2f}%\n")
+    # return "\n".join(results)
