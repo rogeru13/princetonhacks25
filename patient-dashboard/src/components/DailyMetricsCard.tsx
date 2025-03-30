@@ -1,9 +1,23 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
+import { useUser } from '@auth0/nextjs-auth0/client';
+
+// First, add a function to get the patient ID for the authenticated user
+async function getPatientIdForUser(auth0Id: string) {
+    const { data, error } = await supabase
+        .from('patients')
+        .select('id')
+        .eq('auth0_id', auth0Id)
+        .single();
+
+    if (error) throw error;
+    return data.id;
+}
 
 export default function DailyMetricsCard() {
+    const { user } = useUser();
     const [metrics, setMetrics] = useState({
         date: new Date().toISOString().split('T')[0],
         blood_glucose_level: '',
@@ -13,9 +27,6 @@ export default function DailyMetricsCard() {
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
     
-    // Use the patient ID from your component
-    const PATIENT_ID = "14a799bc-2bfd-48b1-a96e-ac394bce8114";
-
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
         setMetrics(prev => ({ ...prev, [name]: value }));
@@ -23,41 +34,23 @@ export default function DailyMetricsCard() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setLoading(true);
-        setError(null);
-        setSuccess(false);
+        if (!user?.sub) return;
 
         try {
-            console.log('Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL);
-            console.log('Submitting metrics for patient:', PATIENT_ID);
-            console.log('Metrics data:', metrics);
+            setLoading(true);
+            setError(null);
+            setSuccess(false);
 
-            // Generate a new UUID for this report
-            const REPORT_ID = crypto.randomUUID();
-            
-            // First, verify the patient exists
-            const { data: patientData, error: patientError } = await supabase
-                .from('patients')
-                .select('id, first_name, last_name')
-                .eq('id', PATIENT_ID)
-                .single();
-                
-            console.log('Patient verification:', { data: patientData, error: patientError });
-            
-            if (patientError) {
-                throw new Error(`Patient verification failed: ${patientError.message}`);
-            }
-            
+            // Get the patient_id for this auth0 user
+            const patientId = await getPatientIdForUser(user.sub);
+
             // Format the data properly
             const formattedData = {
-                id: REPORT_ID,
-                patient_id: PATIENT_ID,
+                patient_id: patientId,
                 date: metrics.date,
                 blood_glucose_level: metrics.blood_glucose_level ? parseFloat(metrics.blood_glucose_level) : null,
                 bmi: metrics.bmi ? parseFloat(metrics.bmi) : null
             };
-            
-            console.log('Formatted data for insert:', formattedData);
             
             // Insert using the Supabase client
             const { data: insertData, error: insertError } = await supabase
@@ -65,43 +58,8 @@ export default function DailyMetricsCard() {
                 .insert(formattedData)
                 .select();
                 
-            console.log('Insert response:', { data: insertData, error: insertError });
-            
             if (insertError) {
                 throw new Error(`Insert failed: ${insertError.message}`);
-            }
-            
-            // Verify the insert by fetching the record
-            const { data: verifyData, error: verifyError } = await supabase
-                .from('daily_reports')
-                .select('*')
-                .eq('id', REPORT_ID)
-                .single();
-                
-            console.log('Verification response:', { data: verifyData, error: verifyError });
-            
-            if (verifyError) {
-                console.warn(`Verification warning: ${verifyError.message}`);
-            }
-            
-            // Also try a direct fetch to the API
-            try {
-                const response = await fetch(
-                    `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/daily_reports?id=eq.${REPORT_ID}`,
-                    {
-                        method: 'GET',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-                            'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!}`
-                        }
-                    }
-                );
-                
-                const result = await response.json();
-                console.log('Direct API verification:', result);
-            } catch (verifyApiError) {
-                console.warn('API verification warning:', verifyApiError);
             }
             
             // Dispatch an event with the new glucose data
@@ -129,6 +87,30 @@ export default function DailyMetricsCard() {
             setLoading(false);
         }
     };
+
+    // When fetching daily reports:
+    useEffect(() => {
+        async function fetchDailyMetrics() {
+            if (!user?.sub) return;
+
+            try {
+                const patientId = await getPatientIdForUser(user.sub);
+
+                const { data, error } = await supabase
+                    .from('daily_reports')
+                    .select('*')
+                    .eq('patient_id', patientId)
+                    .order('date', { ascending: false });
+
+                if (error) throw error;
+                // ... handle the data
+            } catch (error) {
+                console.error('Error fetching daily metrics:', error);
+            }
+        }
+
+        fetchDailyMetrics();
+    }, [user]);
 
     return (
         <div className="bg-white rounded-lg shadow-md border border-vintage-200 p-5">

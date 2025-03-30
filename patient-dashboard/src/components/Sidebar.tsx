@@ -65,7 +65,7 @@ export default function Sidebar() {
             </div>
             <div>
               <h1 className="text-white font-alfa-slab text-xl">Manzana</h1>
-              <p className="text-vintage-100/70 text-sm">EST. 2025</p>
+              <p className="text-vintage-100/70 text-sm">the daily checkup.</p>
             </div>
           </div>
         </div>
@@ -89,7 +89,7 @@ export default function Sidebar() {
           ))}
         </nav>
         
-        {/* Bottom Section - Now using the SidebarCheckupNotification component */}
+        {/* Bottom Section */}
         <div className="absolute bottom-0 left-0 right-0 p-6">
           <SidebarCheckupNotification />
         </div>

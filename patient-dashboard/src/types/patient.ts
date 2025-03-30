@@ -1,12 +1,13 @@
 export type Gender = 'male' | 'female' | 'other';
 export type SmokingHistory = 'never' | 'former' | 'current';
 
-export type PatientProfile = {
+export interface PatientProfile {
     name: string;
     firstName: string;
     lastName: string;
+    email?: string;
     dob: string;
-    gender: Gender;
+    gender: string;
     country: string;
     hypertension: boolean;
     heart_disease: boolean;
@@ -15,8 +16,7 @@ export type PatientProfile = {
     obesity: boolean;
     asthma: boolean;
     family_history: boolean;
-    smokingHistory: SmokingHistory;
-};
+}
 
 export interface DailyMetrics {
     date: string;
