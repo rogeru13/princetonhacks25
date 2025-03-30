@@ -1,0 +1,2 @@
+Gender,Age,Hypertension,Heart_Disease,Smoking_History,BMI,HbA1c_Level,Blood_Glucose_Level,Country,Cholesterol,Systolic_BP,Diastolic_BP,Alcohol_Intake,Physical_Activity_Level,Family_History,Stress_Level,Salt_Intake,Sleep_Duration,Heart_Rate,LDL,HDL,Triglycerides,Glucose,Education_Level,Employment_Status,Diabetes
+Female,80,0,1,never,25.19,6.6,140,UK,230,160,79,27.9,Low,Yes,9,14.7,6.1,80,100,75,72,179,Primary,Unemployed,1

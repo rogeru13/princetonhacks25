@@ -1,0 +1,5 @@
+from supabase import create_client, Client
+
+SUPABASE_URL = "https://your-supabase-url.supabase.co"
+SUPABASE_KEY = "your-anon-key"
+

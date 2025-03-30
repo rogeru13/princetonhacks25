@@ -1,0 +1,18 @@
+Gender,Age,Hypertension,Heart_Disease,Smoking_History,BMI,HbA1c_Level,Blood_Glucose_Level,Country,Cholesterol,Systolic_BP,Diastolic_BP,Alcohol_Intake,Physical_Activity_Level,Family_History,Stress_Level,Salt_Intake,Sleep_Duration,Heart_Rate,LDL,HDL,Triglycerides,Glucose,Education_Level,Employment_Status,Diabetes
+Female,80,0,1,never,25.19,6.6,140,UK,230,160,79,27.9,Low,Yes,9,14.7,6.1,80,100,75,72,179,Primary,Unemployed,1
+Male,42,0,0,never,33.64,4.8,145,Spain,201,120,84,27.5,High,Yes,6,10.8,9.8,56,77,47,90,113,Secondary,Unemployed,0
+Female,36,0,0,current,23.45,5.0,155,Indonesia,173,156,60,1.8,High,Yes,5,6.5,5.2,75,162,56,81,101,Primary,Employed,0
+Female,20,0,0,never,27.32,6.6,85,Canada,183,122,94,11.6,Moderate,Yes,6,4.0,7.5,71,164,93,94,199,Secondary,Retired,1
+Female,44,0,0,never,19.31,6.5,200,France,296,91,97,29.1,Moderate,Yes,6,8.4,5.0,52,108,74,226,157,Primary,Employed,1
+Male,76,1,1,current,20.14,4.8,155,UK,293,158,118,20.3,Moderate,No,7,15.0,8.1,98,81,69,181,85,Tertiary,Employed,0
+Male,28,0,0,never,27.32,5.7,158,South Korea,263,118,62,8.6,Low,Yes,2,3.4,4.0,88,114,52,139,194,Secondary,Employed,0
+Female,54,0,0,No Info,27.32,6.6,80,Canada,151,175,101,16.6,Low,Yes,8,4.2,5.8,99,154,34,132,193,Secondary,Employed,1
+Male,73,1,0,current,18.2,5.7,101,Canada,198,102,104,10.5,Low,Yes,9,11.0,6.6,56,157,81,145,161,Primary,Retired,1
+Female,68,1,0,former,26.5,5.4,135,Germany,180,140,85,9.5,Moderate,Yes,7,9.8,7.2,75,132,65,180,172,Secondary,Employed,0
+Male,55,0,1,never,29.1,5.9,145,USA,205,130,90,14.3,Low,Yes,5,6.1,6.9,72,124,80,160,150,Tertiary,Employed,0
+Female,39,0,0,never,22.8,5.1,120,Japan,160,110,70,4.0,High,No,3,5.2,8.0,68,108,75,110,125,Tertiary,Employed,0
+Male,47,1,1,current,31.0,6.8,190,UK,275,170,105,18.2,Low,Yes,8,12.5,5.5,90,190,92,210,200,Primary,Unemployed,1
+Female,33,0,0,never,24.7,5.6,105,France,145,100,65,3.2,Moderate,No,2,4.8,7.6,65,95,72,140,130,Secondary,Employed,0
+Male,81,1,1,former,28.9,6.3,175,Canada,230,150,98,12.1,Low,Yes,9,10.4,6.3,88,178,85,195,190,Primary,Retired,0
+Female,29,0,0,current,21.9,5.0,95,Spain,170,115,75,6.7,High,No,3,6.0,7.9,70,100,78,135,140,Tertiary,Employed,0
+Male,60,1,1,never,30.2,6.5,185,Germany,260,165,100,15.6,Moderate,Yes,7,11.7,6.8,95,170,88,205,185,Secondary,Retired,1
