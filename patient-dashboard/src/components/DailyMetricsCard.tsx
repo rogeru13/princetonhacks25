@@ -42,47 +42,48 @@ export default function DailyMetricsCard() {
             setSuccess(false);
 
             // Get the patient_id for this auth0 user
-            const patientId = await getPatientIdForUser(user.sub);
+            const { data: patientData, error: patientError } = await supabase
+                .from('patients')
+                .select('id')
+                .eq('auth0_id', user.sub)
+                .single();
+
+            if (patientError) throw new Error('Could not find patient record');
 
             // Format the data properly
             const formattedData = {
-                patient_id: patientId,
+                patient_id: patientData.id,
                 date: metrics.date,
                 blood_glucose_level: metrics.blood_glucose_level ? parseFloat(metrics.blood_glucose_level) : null,
                 bmi: metrics.bmi ? parseFloat(metrics.bmi) : null
             };
             
             // Insert using the Supabase client
-            const { data: insertData, error: insertError } = await supabase
+            const { error: insertError } = await supabase
                 .from('daily_reports')
-                .insert(formattedData)
-                .select();
+                .insert([formattedData]);
                 
-            if (insertError) {
-                throw new Error(`Insert failed: ${insertError.message}`);
-            }
+            if (insertError) throw insertError;
             
-            // Dispatch an event with the new glucose data
-            const metricsEvent = new CustomEvent('metrics-updated', {
+            // Dispatch metrics-updated event
+            window.dispatchEvent(new CustomEvent('metrics-updated', {
                 detail: {
-                    bloodGlucose: metrics.blood_glucose_level ? parseFloat(metrics.blood_glucose_level) : null,
-                    bmi: metrics.bmi ? parseFloat(metrics.bmi) : null,
-                    date: metrics.date
+                    bloodGlucose: formattedData.blood_glucose_level,
+                    bmi: formattedData.bmi,
+                    date: formattedData.date
                 }
-            });
-            window.dispatchEvent(metricsEvent);
+            }));
             
             setSuccess(true);
-            setTimeout(() => setSuccess(false), 3000);
             // Reset form
             setMetrics({
                 date: new Date().toISOString().split('T')[0],
                 blood_glucose_level: '',
                 bmi: ''
             });
-        } catch (err: any) {
+        } catch (err) {
             console.error('Error submitting metrics:', err);
-            setError(err.message || 'An error occurred');
+            setError(err instanceof Error ? err.message : 'Failed to submit metrics');
         } finally {
             setLoading(false);
         }
