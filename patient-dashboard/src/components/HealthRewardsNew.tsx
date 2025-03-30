@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { TrophyIcon } from '@heroicons/react/24/outline';
+import { TrophyIcon, FireIcon, CurrencyDollarIcon } from '@heroicons/react/24/outline';
 import { supabase } from '@/lib/supabase';
 
-export default function RewardsCard() {
+export default function HealthRewardsNew() {
   const [currentStreak, setCurrentStreak] = useState(0);
+  const [totalEarned, setTotalEarned] = useState(120); // Starting with $120 earned
   const [daysCompleted, setDaysCompleted] = useState(0);
   const [lastUpdate, setLastUpdate] = useState(Date.now());
   
@@ -117,9 +118,23 @@ export default function RewardsCard() {
         setCurrentStreak(streak);
       }
       
+      // Update total earned based on progress
+      // $50 for 30-day challenge progress
+      const challengeProgress = Math.min(data.length, 30);
+      const challengeEarnings = Math.floor((challengeProgress / 30) * 50);
+      
+      // $25 for weekly streak
+      const weeklyStreakEarnings = streak >= 7 ? 25 : 0;
+      
+      // Base earnings of $70 (for previous achievements)
+      const baseEarnings = 70;
+      
+      setTotalEarned(baseEarnings + challengeEarnings + weeklyStreakEarnings);
+      
       console.log('Calculation complete:', { 
         currentStreak: streak, 
-        daysCompleted: data.length
+        daysCompleted: data.length,
+        totalEarned: baseEarnings + challengeEarnings + weeklyStreakEarnings
       });
     } catch (error) {
       console.error('Error calculating streak:', error);
@@ -134,16 +149,24 @@ export default function RewardsCard() {
   
   return (
     <div className="bg-white rounded-lg shadow-md border border-vintage-200 p-5">
-      <h2 className="text-xl font-alfa-slab text-vintage-900 mb-4">Health Rewards</h2>
-      <p className="text-sm text-black mb-4">Earn rewards for managing your health</p>
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <h2 className="text-xl font-bold text-vintage-900">Health Rewards</h2>
+          <p className="text-sm text-vintage-600">Earn rewards for managing your health</p>
+        </div>
+        <div className="flex items-center bg-brick-100 text-brick-700 px-4 py-2 rounded-lg">
+          <CurrencyDollarIcon className="w-5 h-5 mr-2" />
+          <span className="font-bold">${totalEarned} Earned</span>
+        </div>
+      </div>
       
-      <div className="bg-vintage-50 rounded-lg p-4 mb-6">
+      <div className="bg-vintage-50 rounded-lg p-4 mb-4">
         <div className="flex justify-between items-center mb-2">
-          <h3 className="font-medium text-vintage-900">Current Challenge</h3>
+          <h3 className="font-bold text-vintage-900">Current Challenge</h3>
           <span className="text-brick-600 font-medium">{daysLeft} days left</span>
         </div>
         
-        <p className="text-sm text-black mb-4">Log your glucose levels daily for 30 days</p>
+        <p className="text-vintage-700 mb-3">Log your glucose levels daily for 30 days</p>
         
         <div className="w-full h-2 bg-vintage-200 rounded-full mb-2">
           <div 
@@ -153,35 +176,35 @@ export default function RewardsCard() {
         </div>
         
         <div className="flex justify-between items-center">
-          <span className="text-sm text-black mb-4">{daysCompleted}/30 days</span>
+          <span className="text-sm text-vintage-600">{daysCompleted}/30 days</span>
           <span className="text-sm font-medium text-brick-600">Reward: $50</span>
         </div>
       </div>
       
-      <h3 className="font-medium text-vintage-900 mb-3">Available Rewards</h3>
+      <h3 className="font-bold text-vintage-900 mb-3">Available Rewards</h3>
       
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
+      <div className="space-y-3">
+        <div className="flex items-center justify-between p-3 bg-vintage-50 rounded-lg border border-vintage-200">
           <div className="flex items-center">
-            <div className="mr-3">
-              <TrophyIcon className="w-5 h-5 text-brick-500" />
+            <div className="bg-brick-100 p-2 rounded-lg mr-3">
+              <TrophyIcon className="w-5 h-5 text-brick-600" />
             </div>
             <div>
               <h4 className="font-medium text-vintage-900">Maintain A1C below 7.0</h4>
-              <p className="text-sm text-gray-900 mb-4">6 month challenge</p>
+              <p className="text-sm text-vintage-600">3 months challenge</p>
             </div>
           </div>
           <span className="font-bold text-brick-600">$150</span>
         </div>
         
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between p-3 bg-vintage-50 rounded-lg border border-vintage-200">
           <div className="flex items-center">
-            <div className="mr-3">
-              <TrophyIcon className="w-5 h-5 text-brick-500" />
+            <div className="bg-brick-100 p-2 rounded-lg mr-3">
+              <TrophyIcon className="w-5 h-5 text-brick-600" />
             </div>
             <div>
               <h4 className="font-medium text-vintage-900">Weekly Check-in Streak</h4>
-              <p className="text-sm text-gray-900 mb-4">Log readings 7 days in a row</p>
+              <p className="text-sm text-vintage-600">Log readings 7 days in a row</p>
             </div>
           </div>
           <span className="font-bold text-brick-600">$25</span>

@@ -104,12 +104,18 @@ export default function DailyMetricsCard() {
                 console.warn('API verification warning:', verifyApiError);
             }
             
-            // Trigger a refresh of the HealthRewards component
-            // This is a simple approach - we'll create a custom event
-            const event = new CustomEvent('metrics-updated');
-            window.dispatchEvent(event);
+            // Dispatch an event with the new glucose data
+            const metricsEvent = new CustomEvent('metrics-updated', {
+                detail: {
+                    bloodGlucose: metrics.blood_glucose_level ? parseFloat(metrics.blood_glucose_level) : null,
+                    bmi: metrics.bmi ? parseFloat(metrics.bmi) : null,
+                    date: metrics.date
+                }
+            });
+            window.dispatchEvent(metricsEvent);
             
             setSuccess(true);
+            setTimeout(() => setSuccess(false), 3000);
             // Reset form
             setMetrics({
                 date: new Date().toISOString().split('T')[0],

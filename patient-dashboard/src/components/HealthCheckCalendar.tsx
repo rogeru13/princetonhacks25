@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import { supabase } from '@/lib/supabase';
+import { getNextCheckupDate } from '@/utils/dateUtils';
 
 interface CalendarDay {
   date: Date;
@@ -10,6 +11,7 @@ interface CalendarDay {
   isToday: boolean;
   hasReport: boolean;
   status?: 'normal' | 'warning' | 'critical';
+  isCheckupDay: boolean;
 }
 
 export default function HealthCheckCalendar() {
@@ -91,7 +93,8 @@ export default function HealthCheckCalendar() {
           isCurrentMonth: false,
           isToday: isSameDay(date, new Date()),
           hasReport: !!healthCheckDates[dateStr],
-          status: healthCheckDates[dateStr]?.status
+          status: healthCheckDates[dateStr]?.status,
+          isCheckupDay: false
         });
       }
       
@@ -99,12 +102,16 @@ export default function HealthCheckCalendar() {
       for (let day = 1; day <= lastDayOfMonth.getDate(); day++) {
         const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
         const dateStr = date.toISOString().split('T')[0];
+        const isCheckupDay = day === getNextCheckupDate(PATIENT_ID).getDate() && 
+                             date.getMonth() === getNextCheckupDate(PATIENT_ID).getMonth() && 
+                             date.getFullYear() === getNextCheckupDate(PATIENT_ID).getFullYear();
         days.push({
           date,
           isCurrentMonth: true,
           isToday: isSameDay(date, new Date()),
           hasReport: !!healthCheckDates[dateStr],
-          status: healthCheckDates[dateStr]?.status
+          status: healthCheckDates[dateStr]?.status,
+          isCheckupDay
         });
       }
       
@@ -119,12 +126,22 @@ export default function HealthCheckCalendar() {
             isCurrentMonth: false,
             isToday: isSameDay(date, new Date()),
             hasReport: !!healthCheckDates[dateStr],
-            status: healthCheckDates[dateStr]?.status
+            status: healthCheckDates[dateStr]?.status,
+            isCheckupDay: false
           });
         }
       }
       
-      setCalendarDays(days);
+      // Add isCheckupDay property
+      const nextCheckupDate = getNextCheckupDate(PATIENT_ID);
+      const updatedDays = days.map(day => {
+        const isCheckupDay = day.date.getDate() === nextCheckupDate.getDate() && 
+                             day.date.getMonth() === nextCheckupDate.getMonth() && 
+                             day.date.getFullYear() === nextCheckupDate.getFullYear();
+        return { ...day, isCheckupDay };
+      });
+      
+      setCalendarDays(updatedDays);
     };
     
     generateCalendarDays();
@@ -198,6 +215,7 @@ export default function HealthCheckCalendar() {
               relative h-10 flex items-center justify-center text-sm rounded-md
               ${day.isCurrentMonth ? 'text-vintage-900' : 'text-vintage-400'}
               ${day.isToday ? 'bg-vintage-100' : ''}
+              ${day.isCheckupDay ? 'ring-2 ring-blue-500' : ''}
             `}
           >
             {day.date.getDate()}
@@ -205,6 +223,9 @@ export default function HealthCheckCalendar() {
               <div 
                 className={`absolute bottom-1 left-1/2 transform -translate-x-1/2 w-1.5 h-1.5 ${getStatusColor(day.status)} rounded-full`}
               ></div>
+            )}
+            {day.isCheckupDay && (
+              <div className="absolute top-1 right-1 w-2 h-2 bg-blue-500 rounded-full"></div>
             )}
           </div>
         ))}
@@ -223,6 +244,10 @@ export default function HealthCheckCalendar() {
           <div className="flex items-center">
             <div className="w-2 h-2 bg-red-500 rounded-full mr-1.5"></div>
             <span>Critical</span>
+          </div>
+          <div className="flex items-center">
+            <div className="w-2 h-2 bg-blue-500 rounded-full mr-1.5"></div>
+            <span>Check-up</span>
           </div>
         </div>
         <div className="flex items-center">

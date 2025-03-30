@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { HomeIcon, UserCircleIcon } from '@heroicons/react/24/outline';
 import Image from 'next/image';
+import SidebarCheckupNotification from './SidebarCheckupNotification';
 
 interface NavItem {
   icon: React.ReactNode;
@@ -87,13 +88,10 @@ export default function Sidebar() {
             </Link>
           ))}
         </nav>
-
-        {/* Bottom Section */}
+        
+        {/* Bottom Section - Now using the SidebarCheckupNotification component */}
         <div className="absolute bottom-0 left-0 right-0 p-6">
-          <div className="p-4 rounded-lg bg-vintage-200/10 border border-vintage-200/20">
-            <p className="text-sm text-vintage-100/70 mb-1">Next Check-up</p>
-            <p className="text-vintage-100 font-medium">February 15, 2025</p>
-          </div>
+          <SidebarCheckupNotification />
         </div>
       </div>
     </>
