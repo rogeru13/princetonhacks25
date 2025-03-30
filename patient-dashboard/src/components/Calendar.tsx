@@ -4,18 +4,25 @@ import { useState, useEffect } from 'react';
 import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import { supabase } from '@/lib/supabase';
 
+interface DailyReport {
+  id: string;
+  patient_id: string;
+  date: string;
+  blood_glucose_level: number | null;
+  bmi: number | null;
+}
+
 interface CalendarDay {
   date: Date;
   isCurrentMonth: boolean;
   isToday: boolean;
   hasReport: boolean;
-  status?: 'normal' | 'warning' | 'critical';
 }
 
-export default function HealthCheckCalendar() {
+export default function Calendar() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [calendarDays, setCalendarDays] = useState<CalendarDay[]>([]);
-  const [healthCheckDates, setHealthCheckDates] = useState<Record<string, { status: 'normal' | 'warning' | 'critical' }>>({});
+  const [completedDates, setCompletedDates] = useState<string[]>([]);
   
   // Use the patient ID from your component
   const PATIENT_ID = "14a799bc-2bfd-48b1-a96e-ac394bce8114";
@@ -24,48 +31,32 @@ export default function HealthCheckCalendar() {
   const monthName = currentDate.toLocaleString('default', { month: 'long' });
   const year = currentDate.getFullYear();
   
-  // Fetch health check dates for the current month
+  // Fetch completed dates for the current month
   useEffect(() => {
-    const fetchHealthCheckDates = async () => {
+    const fetchCompletedDates = async () => {
       const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
       const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
       
       const { data, error } = await supabase
         .from('daily_reports')
-        .select('date, blood_glucose_level')
+        .select('date')
         .eq('patient_id', PATIENT_ID)
         .gte('date', startOfMonth.toISOString().split('T')[0])
         .lte('date', endOfMonth.toISOString().split('T')[0]);
       
       if (error) {
-        console.error('Error fetching health check dates:', error);
+        console.error('Error fetching completed dates:', error);
         return;
       }
       
       if (data) {
-        const healthData: Record<string, { status: 'normal' | 'warning' | 'critical' }> = {};
-        
-        data.forEach(report => {
-          // Determine status based on blood glucose level
-          let status: 'normal' | 'warning' | 'critical' = 'normal';
-          
-          if (report.blood_glucose_level) {
-            if (report.blood_glucose_level > 180) {
-              status = 'critical';
-            } else if (report.blood_glucose_level > 140) {
-              status = 'warning';
-            }
-          }
-          
-          healthData[report.date] = { status };
-        });
-        
-        console.log('Health check dates:', healthData);
-        setHealthCheckDates(healthData);
+        const dates = data.map(report => report.date);
+        console.log('Completed dates:', dates);
+        setCompletedDates(dates);
       }
     };
     
-    fetchHealthCheckDates();
+    fetchCompletedDates();
   }, [currentDate, PATIENT_ID]);
   
   // Generate calendar days
@@ -85,26 +76,22 @@ export default function HealthCheckCalendar() {
       const prevMonthLastDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 0).getDate();
       for (let i = firstDayOfWeek - 1; i >= 0; i--) {
         const date = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, prevMonthLastDay - i);
-        const dateStr = date.toISOString().split('T')[0];
         days.push({
           date,
           isCurrentMonth: false,
           isToday: isSameDay(date, new Date()),
-          hasReport: !!healthCheckDates[dateStr],
-          status: healthCheckDates[dateStr]?.status
+          hasReport: completedDates.includes(date.toISOString().split('T')[0])
         });
       }
       
       // Add days of current month
       for (let day = 1; day <= lastDayOfMonth.getDate(); day++) {
         const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
-        const dateStr = date.toISOString().split('T')[0];
         days.push({
           date,
           isCurrentMonth: true,
           isToday: isSameDay(date, new Date()),
-          hasReport: !!healthCheckDates[dateStr],
-          status: healthCheckDates[dateStr]?.status
+          hasReport: completedDates.includes(date.toISOString().split('T')[0])
         });
       }
       
@@ -113,13 +100,11 @@ export default function HealthCheckCalendar() {
       if (remainingDays < 7) {
         for (let day = 1; day <= remainingDays; day++) {
           const date = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, day);
-          const dateStr = date.toISOString().split('T')[0];
           days.push({
             date,
             isCurrentMonth: false,
             isToday: isSameDay(date, new Date()),
-            hasReport: !!healthCheckDates[dateStr],
-            status: healthCheckDates[dateStr]?.status
+            hasReport: completedDates.includes(date.toISOString().split('T')[0])
           });
         }
       }
@@ -128,7 +113,7 @@ export default function HealthCheckCalendar() {
     };
     
     generateCalendarDays();
-  }, [currentDate, healthCheckDates]);
+  }, [currentDate, completedDates]);
   
   // Helper function to check if two dates are the same day
   const isSameDay = (date1: Date, date2: Date) => {
@@ -147,24 +132,10 @@ export default function HealthCheckCalendar() {
     setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
   };
   
-  // Get status color
-  const getStatusColor = (status?: 'normal' | 'warning' | 'critical') => {
-    switch (status) {
-      case 'critical':
-        return 'bg-red-500';
-      case 'warning':
-        return 'bg-yellow-500';
-      case 'normal':
-        return 'bg-green-500';
-      default:
-        return 'bg-gray-300';
-    }
-  };
-  
   return (
     <div className="bg-white rounded-lg shadow-md border border-vintage-200 p-5">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-alfa-slab text-vintage-900">Health Check History</h2>
+        <h2 className="text-xl font-alfa-slab text-vintage-900">Check-in Calendar</h2>
         <div className="flex items-center space-x-2">
           <button 
             onClick={goToPreviousMonth}
@@ -198,32 +169,21 @@ export default function HealthCheckCalendar() {
               relative h-10 flex items-center justify-center text-sm rounded-md
               ${day.isCurrentMonth ? 'text-vintage-900' : 'text-vintage-400'}
               ${day.isToday ? 'bg-vintage-100' : ''}
+              ${day.hasReport ? 'font-semibold' : ''}
             `}
           >
             {day.date.getDate()}
             {day.hasReport && (
-              <div 
-                className={`absolute bottom-1 left-1/2 transform -translate-x-1/2 w-1.5 h-1.5 ${getStatusColor(day.status)} rounded-full`}
-              ></div>
+              <div className="absolute bottom-1 left-1/2 transform -translate-x-1/2 w-1.5 h-1.5 bg-brick-500 rounded-full"></div>
             )}
           </div>
         ))}
       </div>
       
       <div className="mt-4 flex items-center justify-between text-xs text-vintage-900/70">
-        <div className="flex items-center space-x-4">
-          <div className="flex items-center">
-            <div className="w-2 h-2 bg-green-500 rounded-full mr-1.5"></div>
-            <span>Normal</span>
-          </div>
-          <div className="flex items-center">
-            <div className="w-2 h-2 bg-yellow-500 rounded-full mr-1.5"></div>
-            <span>Warning</span>
-          </div>
-          <div className="flex items-center">
-            <div className="w-2 h-2 bg-red-500 rounded-full mr-1.5"></div>
-            <span>Critical</span>
-          </div>
+        <div className="flex items-center">
+          <div className="w-2 h-2 bg-brick-500 rounded-full mr-1.5"></div>
+          <span>Completed check-in</span>
         </div>
         <div className="flex items-center">
           <div className="w-4 h-4 bg-vintage-100 rounded-sm mr-1.5"></div>
